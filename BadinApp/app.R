@@ -10,6 +10,7 @@
 library(shiny)
 library(rgdal)
 library(leaflet)
+library(rsconnect)
 
 md.geocoded <- read.csv("rural_md_geocoded.csv", stringsAsFactors = F)
 md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon","lat")], data = md.geocoded,
@@ -66,4 +67,3 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
