@@ -8,6 +8,9 @@
 #
 
 library(shiny)
+library(rgdal)
+library(leaflet)
+
 md.geocoded <- read.csv("rural_md_geocoded.csv", stringsAsFactors = F)
 md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon","lat")], data = md.geocoded,
                                    proj4string = CRS("+proj=longlat +datum=WGS84"))
