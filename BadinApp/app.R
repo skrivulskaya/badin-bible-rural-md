@@ -23,10 +23,10 @@ md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
                          # "Number Copies: ",md.spdf$SubscriberNoCopies, "<br/>",
                          # "Under 16: ",ifelse(is.na(md.spdf$Under.16),"Unknown",md.spdf$Under.16), "<br/>",
                          # "Over 16: ",ifelse(is.na(md.spdf$Over16),"Unknown",md.spdf$Over16), "<br/>",
-                         "Total Household Size: ",ifelse(is.na(md.spdf$CensusNumberOfHouseholdMembers),"Unknown",md.spdf$CensusNumberOfHouseholdMembers), "<br/>",
-                         "Location: ",md.spdf$PlottedLocation, "<br/>",
-                         "Enslaved People: ",ifelse(is.na(md.spdf$NumberSlaves),"Unknown",md.spdf$NumberSlaves), "<br/>",
-                         "Notes: ",ifelse(is.na(md.spdf$ShinyNote),"N/A",md.spdf$ShinyNote),"<br/>"
+                        "Total Household Size: ",ifelse(is.na(md.spdf$CensusNumberOfHouseholdMembers),"Unknown",md.spdf$CensusNumberOfHouseholdMembers), "<br/>",
+                        "Enslaved People: ",ifelse(is.na(md.spdf$NumberSlaves),"Unknown",md.spdf$NumberSlaves), "<br/>",
+                        "Location: ",md.spdf$PlottedLocation, "<br/>", 
+                        "Notes: ",ifelse(is.na(md.spdf$ShinyNote),"N/A",md.spdf$ShinyNote),"<br/>"
 ) #end html popup
 
 
@@ -36,16 +36,24 @@ ui <- fluidPage(
    # Application title
    titlePanel("Badin Bible Maryland Viewer"),
    
+   # MainPanel row
+   fluidRow(wellPanel(
+   
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
      sidebarPanel(
         checkboxInput("slaves", "Confirmed Slave Owners Only", value = FALSE, width = NULL),
         checkboxInput("priests", "Priests Only", value = FALSE, width = NULL)
       ),
-      mainPanel(leafletOutput("mymap")
-      )#end MainPanel
-   ),
+      mainPanel(leafletOutput("mymap"))
+   ))),#end MainPanel
    hr()
+   
+   # Output tables row <-develop further
+   ,
+   fluidRow(
+     column(2, h5("Summary Chart: "))
+   )
 )
 
 # Define server logic required to draw a histogram
@@ -76,10 +84,13 @@ server <- function(input, output) {
        addCircleMarkers(data = points(),color = ~pal(LocationConfidenceLevel), popup = ~popupw) %>%
        addLegend("bottomleft",pal = pal,values=points()$LocationConfidenceLevel, opacity = 1)
    })
+
 }
 # pal <- colorFactor(palette = 'Set1', domain =md.geocoded$LocationConfidenceLevel)
-
 
 # Run the application 
 shinyApp(ui = ui, server = server)
 
+# Update the application in Shinyapps.io
+# library(rsconnect)
+# deployApp()
