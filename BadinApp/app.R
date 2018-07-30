@@ -14,8 +14,27 @@ library(rgdal)
 library(leaflet)
 library(rsconnect)
 
+
+#Data Prep
 md.geocoded <- read.csv("rural_md_geocoded.csv", stringsAsFactors = F)
-md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon","lat")], data = md.geocoded,
+
+#randomizingPoints
+md.geocoded$latlong <- paste(md.geocoded$lat,md.geocoded$lon,sep="-")
+a<- data.frame(table(md.geocoded$latlong))
+a$latlong <- as.character(a$Var1)
+a$Var1 <- NULL
+md.geocoded <- merge(md.geocoded,  a, by="latlong",all=T)
+remove(a)
+md.geocoded$lat_edit <-ifelse((md.geocoded$Freq > 1),  md.geocoded$lat - (runif(nrow(md.geocoded))-.5)/40,md.geocoded$lat)
+md.geocoded$lon_edit <-ifelse((md.geocoded$Freq > 1), md.geocoded$lon - (runif(nrow(md.geocoded))-.5)/40,md.geocoded$lon)
+md.geocoded$latlong<- NULL
+
+#end RandomizingPoints
+
+
+
+
+md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon_edit","lat_edit")], data = md.geocoded,
                                    proj4string = CRS("+proj=longlat +datum=WGS84"))
 pal <- colorFactor(palette = 'Set1', domain =md.geocoded$LocationConfidenceLevel)
 md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
@@ -27,7 +46,7 @@ md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
                         "Enslaved People: ",ifelse(is.na(md.spdf$NumberSlaves),"Unknown",md.spdf$NumberSlaves), "<br/>",
                         "Location: ",md.spdf$PlottedLocation, "<br/>", 
                         "Notes: ",ifelse(is.na(md.spdf$ShinyNote),"N/A",md.spdf$ShinyNote),"<br/>"
-) #end html popup
+                    ) #end html popup
 
 
 # Define UI for application that draws a histogram
