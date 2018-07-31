@@ -86,7 +86,7 @@ server <- function(input, output) {
       
     }, ignoreNULL = FALSE)
     
-    points <- eventReactive(c(input$priests), {
+    points2 <- eventReactive(c(input$priests), {
       working.spdf <- md.spdf
       if (input$priests){
         working.spdf <- working.spdf[which(!is.na(working.spdf$Priest)),]
