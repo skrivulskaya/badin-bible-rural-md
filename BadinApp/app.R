@@ -56,7 +56,7 @@ ui <- fluidPage(
    titlePanel("Badin Bible Maryland Viewer"),
    
    # MainPanel row
-   fluidRow(wellPanel(
+   fluidRow(
    
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
@@ -65,7 +65,7 @@ ui <- fluidPage(
         checkboxInput("priests", "Priests Only", value = FALSE, width = NULL)
       ),
       mainPanel(leafletOutput("mymap"))
-   ))),#end MainPanel
+   )),#end MainPanel
    hr()
    
    # Output tables row <-develop further
@@ -77,24 +77,19 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-    points <- eventReactive(c(input$slaves), {
+    points <- eventReactive(c(input$slaves, input$priests), {
       working.spdf <- md.spdf
       if (input$slaves){
         working.spdf <- working.spdf[which(!is.na(working.spdf$SlaveOwner)),]
       }
+      else
+        if (input$priests){
+              working.spdf <- working.spdf[which(!is.na(working.spdf$Priest)),]
+        }
       return(working.spdf)
-      
     }, ignoreNULL = FALSE)
     
-    points2 <- eventReactive(c(input$priests), {
-      working.spdf <- md.spdf
-      if (input$priests){
-        working.spdf <- working.spdf[which(!is.na(working.spdf$Priest)),]
-      }
-      return(working.spdf)
-      
-    }, ignoreNULL = FALSE)
-    
+# Reactive map output    
    output$mymap <- renderLeaflet({
      leaflet() %>%
        addProviderTiles(providers$Stamen.TonerLite,
