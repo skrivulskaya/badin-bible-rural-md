@@ -17,6 +17,8 @@ library(rsconnect)
 
 #Data Prep
 md.geocoded <- read.csv("rural_md_geocoded.csv", stringsAsFactors = F)
+md.slave.data <- read.csv("enslaved_people_list.csv", stringsAsFactors = F)
+
 
 #randomizingPoints
 md.geocoded$latlong <- paste(md.geocoded$lat,md.geocoded$lon,sep="-")
@@ -29,6 +31,10 @@ md.geocoded$lat_edit <-ifelse((md.geocoded$Freq > 1),  md.geocoded$lat - (runif(
 md.geocoded$lon_edit <-ifelse((md.geocoded$Freq > 1), md.geocoded$lon - (runif(nrow(md.geocoded))-.5)/40,md.geocoded$lon)
 md.geocoded$latlong<- NULL
 
+md.geocoded$SlavOwnerText <- "Unknown"
+md.geocoded[!is.na(md.geocoded$SlaveOwner),]$SlavOwnerText <- "Confirmed"
+
+
 #end RandomizingPoints
 
 
@@ -37,6 +43,7 @@ md.geocoded$latlong<- NULL
 md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon_edit","lat_edit")], data = md.geocoded,
                                    proj4string = CRS("+proj=longlat +datum=WGS84"))
 pal <- colorFactor(palette = 'Set1', domain =md.geocoded$LocationConfidenceLevel)
+pal.slaves <- colorFactor(palette = 'Set1', domain =md.geocoded$SlavOwnerText)
 md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
                         "Years: ", ifelse(is.na(md.spdf$ShinyDates), "Unknown", md.spdf$ShinyDates),"<br/>",
                          # "Number Copies: ",md.spdf$SubscriberNoCopies, "<br/>",
@@ -72,6 +79,9 @@ ui <- fluidPage(
    ,
    fluidRow(
      column(2, h5("Summary Chart: "))
+   ),
+   fluidRow(
+     column(12,plotOutput("chartTest"))
    )
 )
 
@@ -98,6 +108,9 @@ server <- function(input, output) {
        addCircleMarkers(data = points(),color = ~pal(LocationConfidenceLevel), popup = ~popupw) %>%
        addLegend("bottomleft",pal = pal,values=points()$LocationConfidenceLevel, opacity = 1)
    })
+   output$chartTest<-renderPlot(
+     hist(points()@data$CensusNumberOfHouseholdMembers)
+   )
 
 }
 # pal <- colorFactor(palette = 'Set1', domain =md.geocoded$LocationConfidenceLevel)
