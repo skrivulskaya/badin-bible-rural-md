@@ -146,8 +146,8 @@ server <- function(input, output) {
                                18,2,2))
     #create visNetwork
     visNetwork(nodes, edges) %>%
-      #add drop-down option to select a particular person
-        # visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE, selectedBy = "group") %>%
+      # add drop-down option to select a particular person
+      visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE, selectedBy = "group") %>%
       #define shapes and colors for the clergy
       visGroups(groupname = "Clergy", color = list(background = "lightgray",border="darkgray"), shape = "box", borderWidth = 1) %>% 
       # define shapes and colors for the lay subscribers
@@ -159,5 +159,5 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 
 #update the application in Shinyapps.io
-library(rsconnect)
-deployApp()
+# library(rsconnect)
+# deployApp()
