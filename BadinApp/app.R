@@ -52,107 +52,110 @@ pal.slaves <- colorFactor(palette = 'Set1', domain =md.geocoded$SlavOwnerText)
 #generate html popup
 md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
                         "Years: ", ifelse(is.na(md.spdf$ShinyDates), "Unknown", md.spdf$ShinyDates),"<br/>",
-                         # "Number Copies: ",md.spdf$SubscriberNoCopies, "<br/>",
-                         # "Under 16: ",ifelse(is.na(md.spdf$Under.16),"Unknown",md.spdf$Under.16), "<br/>",
-                         # "Over 16: ",ifelse(is.na(md.spdf$Over16),"Unknown",md.spdf$Over16), "<br/>",
+                        # "Number Copies: ",md.spdf$SubscriberNoCopies, "<br/>",
+                        # "Under 16: ",ifelse(is.na(md.spdf$Under.16),"Unknown",md.spdf$Under.16), "<br/>",
+                        # "Over 16: ",ifelse(is.na(md.spdf$Over16),"Unknown",md.spdf$Over16), "<br/>",
                         "Total Household Size: ",ifelse(is.na(md.spdf$CensusNumberOfHouseholdMembers),"Unknown",md.spdf$CensusNumberOfHouseholdMembers), "<br/>",
                         "Enslaved People: ",ifelse(is.na(md.spdf$NumberSlaves),"Unknown",md.spdf$NumberSlaves), "<br/>",
                         "Location: ",md.spdf$PlottedLocation, "<br/>", 
                         "Notes: ",ifelse(is.na(md.spdf$ShinyNote),"N/A",md.spdf$ShinyNote),"<br/>"
-                    ) #end html popup
+) #end html popup
 
 #SHINY SECTION
 #build Shiny interface
 ui <- dashboardPage(
   dashboardHeader(title = "Badin Bible Subscribers"),
   dashboardSidebar(
-    checkboxInput("slaves", "Confirmed Slave Owners Only", value = FALSE, width = NULL),
-    checkboxInput("priests", "Priests Only", value = FALSE, width = NULL),
-  sidebarMenu(
-    menuItem("Map", tabName = "map"),
-    menuItem("Network", tabName = "network"),
-    menuItem("Raw Data", tabName = "rawdata")
-  )),
+    sidebarMenu(
+      menuItem("Map", tabName = "map",icon = icon("map-marker"), selected = TRUE, startExpanded = FALSE),
+      checkboxInput("slaves", "Confirmed Slave Owners Only", value = FALSE, width = NULL),
+      checkboxInput("priests", "Priests Only", value = FALSE, width = NULL),
+      menuItem("Network", tabName = "network", icon = icon("th")),
+      menuItem("Raw Data", tabName = "rawdata",icon = icon("file")),
+      menuItem("About", tabName = "about", icon = icon("info"))
+    )),
   dashboardBody(
     tabItems(
       tabItem("map",
               fluidRow(
                 box(width = 9, status = "primary", solidHeader = TRUE,
-                  title = "Subscribers in Rural Maryland",
-                  leafletOutput("mymap", height = 500)),
+                    title = "Subscribers in Rural Maryland",
+                    leafletOutput("mymap", height = 500)),
                 box(width = 3, status = "primary", solidHeader = TRUE, collapsible = TRUE,
-                  title = "Household Size", 
-                  plotOutput("chartTest", height = 200)),
+                    title = "Household Size Example", 
+                    plotOutput("chartTest", height = 200)),
                 box(width = 3, status = "primary", solidHeader = TRUE, collapsible = TRUE,
                     title = "Another Output Example", 
                     plotOutput("anotherOutput", height = 200))
-                )),
+              )),
       tabItem("network",
               fluidRow(visNetworkOutput("network", height = 600)
               )),
       tabItem("rawdata")
     )
-))
+  ))
 
 #define server logic
 server <- function(input, output) {
-    points <- eventReactive(c(input$slaves, input$priests), {
-      working.spdf <- md.spdf
-      if (input$slaves){
-        working.spdf <- working.spdf[which(!is.na(working.spdf$SlaveOwner)),]
+  points <- eventReactive(c(input$slaves, input$priests), {
+    working.spdf <- md.spdf
+    if (input$slaves){
+      working.spdf <- working.spdf[which(!is.na(working.spdf$SlaveOwner)),]
+    }
+    else
+      if (input$priests){
+        working.spdf <- working.spdf[which(!is.na(working.spdf$Priest)),]
       }
-      else
-        if (input$priests){
-              working.spdf <- working.spdf[which(!is.na(working.spdf$Priest)),]
-        }
-      return(working.spdf)
-    }, ignoreNULL = FALSE)
-    
-#reactive map output    
-   output$mymap <- renderLeaflet({
-     leaflet() %>%
-       addProviderTiles(providers$Stamen.TonerLite,
-                        options = providerTileOptions(noWrap = TRUE)
-       ) %>%
-       addCircleMarkers(data = points(),color = ~pal(LocationConfidenceLevel), popup = ~popupw) %>%
-       addLegend("bottomleft",pal = pal,values=points()$LocationConfidenceLevel, opacity = 1)
-   })
-   
-#define server logic required to draw a histogram
-   output$chartTest<-renderPlot(
-     hist(points()@data$CensusNumberOfHouseholdMembers)
-   )
-   
-#visNetwork output
-   output$network <- renderVisNetwork({
-     #create nodes
-     nodes <- data.frame(id = 1:29,
-                         label = paste(clergy.net$ShinyName), #node label
-                         title = paste(clergy.net$popupw), #text on click
-                         group = paste(clergy.net$Group) #group by status to assign different shapes to nodes
-     )
-     #create connections
-     edges <- data.frame(from = c(1,1,1,1,1,1,1,1,1,1,
-                                  1,1,1,1,1,1,1,1,1,1,
-                                  1,1,1,1,1,1,1,1,
-                                  10,11,28,16,7,7,8,
-                                  12,13,13,27,27,
-                                  19,19,26,26,26,26,26,
-                                  20,20,20,20,21,21,
-                                  29,29,18), 
-                         to = c(2:29,
-                                28,28,2,29,8,9,9,
-                                2,19,20,18,2,
-                                20,21,20,21,29,18,2,
-                                21,29,18,2,29,2,
-                                18,2,2))
-     #create visNetwork
-     visNetwork(nodes, edges) %>%
-       #define shapes and colors for the clergy
-       visGroups(groupname = "Clergy", color = list(background = "lightgray",border="darkgray"), shape = "box", borderWidth = 1) %>% 
-       # define shapes and colors for the lay subscribers
-       visGroups(groupname = "Lay", shape = "box")
-})
+    return(working.spdf)
+  }, ignoreNULL = FALSE)
+  
+  #reactive map output    
+  output$mymap <- renderLeaflet({
+    leaflet() %>%
+      addProviderTiles(providers$Stamen.TonerLite,
+                       options = providerTileOptions(noWrap = TRUE)
+      ) %>%
+      addCircleMarkers(data = points(),color = ~pal(LocationConfidenceLevel), popup = ~popupw) %>%
+      addLegend("bottomleft",pal = pal,values=points()$LocationConfidenceLevel, opacity = 1)
+  })
+  
+  #define server logic required to draw a histogram
+  output$chartTest<-renderPlot(
+    hist(points()@data$CensusNumberOfHouseholdMembers)
+  )
+  
+  #visNetwork output
+  output$network <- renderVisNetwork({
+    #create nodes
+    nodes <- data.frame(id = 1:29,
+                        label = paste(clergy.net$ShinyName), #node label
+                        title = paste(clergy.net$popupw), #text on click
+                        group = paste(clergy.net$Group) #group by status to assign different shapes to nodes
+    )
+    #create connections
+    edges <- data.frame(from = c(1,1,1,1,1,1,1,1,1,1,
+                                 1,1,1,1,1,1,1,1,1,1,
+                                 1,1,1,1,1,1,1,1,
+                                 10,11,28,16,7,7,8,
+                                 12,13,13,27,27,
+                                 19,19,26,26,26,26,26,
+                                 20,20,20,20,21,21,
+                                 29,29,18), 
+                        to = c(2:29,
+                               28,28,2,29,8,9,9,
+                               2,19,20,18,2,
+                               20,21,20,21,29,18,2,
+                               21,29,18,2,29,2,
+                               18,2,2))
+    #create visNetwork
+    visNetwork(nodes, edges) %>%
+      #add drop-down option to select a particular person
+        # visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE, selectedBy = "group") %>%
+      #define shapes and colors for the clergy
+      visGroups(groupname = "Clergy", color = list(background = "lightgray",border="darkgray"), shape = "box", borderWidth = 1) %>% 
+      # define shapes and colors for the lay subscribers
+      visGroups(groupname = "Lay", shape = "box")
+  })
 }
 
 #run the application 
