@@ -52,9 +52,6 @@ pal.slaves <- colorFactor(palette = 'Set1', domain =md.geocoded$SlavOwnerText)
 #generate html popup
 md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
                         "Years: ", ifelse(is.na(md.spdf$ShinyDates), "Unknown", md.spdf$ShinyDates),"<br/>",
-                        # "Number Copies: ",md.spdf$SubscriberNoCopies, "<br/>",
-                        # "Under 16: ",ifelse(is.na(md.spdf$Under.16),"Unknown",md.spdf$Under.16), "<br/>",
-                        # "Over 16: ",ifelse(is.na(md.spdf$Over16),"Unknown",md.spdf$Over16), "<br/>",
                         "Total Household Size: ",ifelse(is.na(md.spdf$CensusNumberOfHouseholdMembers),"Unknown",md.spdf$CensusNumberOfHouseholdMembers), "<br/>",
                         "Enslaved People: ",ifelse(is.na(md.spdf$NumberSlaves),"Unknown",md.spdf$NumberSlaves), "<br/>",
                         "Location: ",md.spdf$PlottedLocation, "<br/>", 
@@ -64,7 +61,7 @@ md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
 #SHINY SECTION
 #build Shiny interface
 ui <- dashboardPage(
-  dashboardHeader(title = "Badin Bible Subscribers"),
+  dashboardHeader(title = "First U.S. Catholic Bible"),
   dashboardSidebar(
     sidebarMenu(
       menuItem("Map", tabName = "map",icon = icon("map-marker"), selected = TRUE, startExpanded = FALSE),
@@ -162,5 +159,5 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 
 #update the application in Shinyapps.io
-# library(rsconnect)
-# deployApp()
+library(rsconnect)
+deployApp()
