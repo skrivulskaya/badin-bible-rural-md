@@ -67,6 +67,7 @@ ui <- dashboardPage(
       menuItem("Map", tabName = "map",icon = icon("map-marker"), selected = TRUE, startExpanded = FALSE),
       checkboxInput("slaves", "Confirmed Slave Owners Only", value = FALSE, width = NULL),
       checkboxInput("priests", "Priests Only", value = FALSE, width = NULL),
+      selectInput("toDisplay","Display",c("Slave Owner","LocationAccuracy"), selected = "Slave Owner"),
       menuItem("Network", tabName = "network", icon = icon("th")),
       menuItem("Raw Data", tabName = "rawdata",icon = icon("file")),
       menuItem("About", tabName = "about", icon = icon("info"))
@@ -111,10 +112,31 @@ server <- function(input, output) {
     leaflet() %>%
       addProviderTiles(providers$Stamen.TonerLite,
                        options = providerTileOptions(noWrap = TRUE)
-      ) %>%
-      addCircleMarkers(data = points(),color = ~pal(LocationConfidenceLevel), popup = ~popupw) %>%
-      addLegend("bottomleft",pal = pal,values=points()$LocationConfidenceLevel, opacity = 1)
+      )  
+      
+      # addCircleMarkers(data = points(),color = ~pal(LocationConfidenceLevel), popup = ~popupw) %>%
+      # 
   })
+  observe({
+    if(input$toDisplay=="Slave Owner"){
+      texty<-"SlavOwnerText"
+      colorData <- pal.slaves(points()$SlavOwnerText)
+      pal.name <- pal.slaves
+    }
+    if (input$toDisplay=="LocationAccuracy"){
+      texty<-"LocationConfidenceLevel"
+      colorData <- pal(points()$LocationConfidenceLevel)
+      pal.name <- pal
+    }
+  
+  leafletProxy("mymap",data=points())%>%
+    clearControls()%>%
+    clearMarkers() %>%
+    addCircleMarkers(data = points(),color = colorData, popup = ~popupw) %>%
+    addLegend("bottomleft",pal = pal.name,values=points()[[texty]], opacity = 1)%>%
+    fitBounds(~min(lon), ~min(lat), ~max(lon), ~max(lat))
+  
+  })#End observe
   
   #define server logic required to draw a histogram
   output$chartTest<-renderPlot(
