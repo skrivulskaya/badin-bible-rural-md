@@ -13,6 +13,7 @@ library(leaflet)
 library(rsconnect)
 library(shinydashboard)
 library(visNetwork)
+library(dplyr)
 
 #load data files
 md.geocoded <- read.csv("rural_md_geocoded.csv", stringsAsFactors = F)
@@ -32,6 +33,10 @@ clergy.net$popupw <- paste(sep = "", "<b>",clergy.net$ShinyName,"</b><br/>",
 #MAPPING SECTION
 #randomize points on the map
 md.geocoded$latlong <- paste(md.geocoded$lat,md.geocoded$lon,sep="-")
+
+md.geocoded$numSlaves <- as.integer(md.geocoded$NumberSlaves)
+
+
 a<- data.frame(table(md.geocoded$latlong))
 a$latlong <- as.character(a$Var1)
 a$Var1 <- NULL
@@ -127,17 +132,19 @@ server <- function(input, output) {
       texty<-"SlavOwnerText"
       colorData <- pal.slaves(points()$SlavOwnerText)
       pal.name <- pal.slaves
+      size <- points()$numSlaves/10
     }
     if (input$toDisplay=="LocationAccuracy"){
       texty<-"LocationConfidenceLevel"
       colorData <- pal(points()$LocationConfidenceLevel)
       pal.name <- pal
+      size <-10
     }
   
   leafletProxy("mymap",data=points())%>%
     clearControls()%>%
     clearMarkers() %>%
-    addCircleMarkers(data = points(),color = colorData, popup = ~popupw) %>%
+    addCircleMarkers(data = points(),color = colorData, popup = ~popupw, radius = size) %>%
     addLegend("bottomleft",pal = pal.name,values=points()[[texty]], opacity = 1)%>%
     fitBounds(~min(lon), ~min(lat), ~max(lon), ~max(lat))
   
