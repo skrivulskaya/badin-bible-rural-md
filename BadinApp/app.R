@@ -110,9 +110,14 @@ server <- function(input, output) {
   #reactive map output    
   output$mymap <- renderLeaflet({
     leaflet() %>%
+      addProviderTiles(providers$Esri.WorldPhysical,
+                       options = providerTileOptions(noWrap = TRUE),"Topographic")%>%
       addProviderTiles(providers$Stamen.TonerLite,
-                       options = providerTileOptions(noWrap = TRUE)
-      )  
+                       options = providerTileOptions(noWrap = TRUE), group = "Modern") %>%
+      addLayersControl(
+        baseGroups = c("Topographic","Modern"),
+        options = layersControlOptions(collapsed = TRUE)
+      )
       
       # addCircleMarkers(data = points(),color = ~pal(LocationConfidenceLevel), popup = ~popupw) %>%
       # 
