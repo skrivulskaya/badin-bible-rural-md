@@ -16,7 +16,7 @@ library(visNetwork)
 library(dplyr)
 
 #load data files
-md.geocoded <- read.csv("rural_md_geocoded.csv", stringsAsFactors = F)
+md.geocoded <- read.csv("rural_md_geocoded.csv")
 md.slave.data <- read.csv("enslaved_people_list.csv", stringsAsFactors = F)
 clergy.net <- read.csv("priest_network.csv", header = T, as.is = T)
 
@@ -31,12 +31,14 @@ clergy.net$popupw <- paste(sep = "", "<b>",clergy.net$ShinyName,"</b><br/>",
 
 
 #MAPPING SECTION
-#randomize points on the map
+# library(dplyr)
+md.geocoded$LocationConfidenceLevel<- factor(md.geocoded$LocationConfidenceLevel, levels=c("State","County","City","Point"))
+# print(levels(md.geocoded$LocationConfidenceLevel))
 md.geocoded$latlong <- paste(md.geocoded$lat,md.geocoded$lon,sep="-")
 
 md.geocoded$numSlaves <- as.integer(md.geocoded$NumberSlaves)
 
-
+#randomize points on the map
 a<- data.frame(table(md.geocoded$latlong))
 a$latlong <- as.character(a$Var1)
 a$Var1 <- NULL
@@ -51,6 +53,8 @@ md.geocoded[!is.na(md.geocoded$SlaveOwner),]$SlavOwnerText <- "Confirmed"
 #map and color legend
 md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon_edit","lat_edit")], data = md.geocoded,
                                    proj4string = CRS("+proj=longlat +datum=WGS84"))
+
+
 pal <- colorFactor(palette = 'Set1', domain =md.geocoded$LocationConfidenceLevel)
 pal.slaves <- colorFactor(palette = 'Set1', domain =md.geocoded$SlavOwnerText)
 
@@ -66,6 +70,7 @@ md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
 #SHINY SECTION
 #build Shiny interface
 ui <- dashboardPage(
+  
   dashboardHeader(title = "First U.S. Catholic Bible"),
   dashboardSidebar(
     sidebarMenu(
@@ -78,6 +83,14 @@ ui <- dashboardPage(
       menuItem("About", tabName = "about", icon = icon("info"))
     )),
   dashboardBody(
+    tags$head(tags$style(type = "text/css", "html, body {width:100%;height:100%}",
+                         ".leaflet .legend i{
+                         border-radius: 50%;
+                         width: 10px;
+                         height: 10px;
+                         margin-top: 4px;
+                         }
+                         ")),
     tabItems(
       tabItem("map",
               fluidRow(
@@ -100,6 +113,21 @@ ui <- dashboardPage(
 
 #define server logic
 server <- function(input, output) {
+  
+  addLegendCustom <- function(second, map,colors, labels, sizes, opacity = 0.5){
+    print(second)
+    if (second){
+      colorAdditions <- paste0(colors, "; width:", sizes, "px; height:", sizes, "px")
+      labelAdditions <- paste0("<div style='display: inline-block;height: ", sizes, "px;margin-top: 4px;line-height: ", sizes, "px;'>", labels, "</div>")
+      
+      return(addLegend(map, "bottomleft", colors = colorAdditions, labels = labelAdditions, opacity = opacity)) 
+      
+    }else{
+      return(clearTopoJSON(map))
+    }
+
+  }
+  
   points <- eventReactive(c(input$slaves, input$priests), {
     working.spdf <- md.spdf
     if (input$slaves){
@@ -132,13 +160,16 @@ server <- function(input, output) {
       texty<-"SlavOwnerText"
       colorData <- pal.slaves(points()$SlavOwnerText)
       pal.name <- pal.slaves
-      size <- points()$numSlaves/10
+      size <- points()$numSlaves/5
+      second.legend <- TRUE
+      
     }
     if (input$toDisplay=="LocationAccuracy"){
       texty<-"LocationConfidenceLevel"
       colorData <- pal(points()$LocationConfidenceLevel)
       pal.name <- pal
       size <-10
+      second.legend <- FALSE
     }
   
   leafletProxy("mymap",data=points())%>%
@@ -146,6 +177,7 @@ server <- function(input, output) {
     clearMarkers() %>%
     addCircleMarkers(data = points(),color = colorData, popup = ~popupw, radius = size) %>%
     addLegend("bottomleft",pal = pal.name,values=points()[[texty]], opacity = 1)%>%
+    addLegendCustom(second = second.legend, colors = pal.slaves("Confirmed"), labels = c("Few", "", "Many"), sizes = c(5, 10, 20))%>%
     fitBounds(~min(lon), ~min(lat), ~max(lon), ~max(lat))
   
   })#End observe
