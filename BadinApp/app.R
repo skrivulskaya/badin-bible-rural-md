@@ -5,7 +5,7 @@
 
 #clear memory
 rm(list=ls(all=TRUE))
-
+#setwd("E:\\GIT_Checkouts\\R_Scripts\\badin-bible-rural-md\\BadinApp")
 #load required packages
 library(shiny)
 library(rgdal)
@@ -77,6 +77,9 @@ ui <- dashboardPage(
       menuItem("Map", tabName = "map",icon = icon("map-marker"), selected = TRUE, startExpanded = FALSE),
       checkboxInput("slaves", "Confirmed Slave Owners Only", value = FALSE, width = NULL),
       checkboxInput("priests", "Priests Only", value = FALSE, width = NULL),
+      checkboxGroupInput("planSize", label = "Platation Size", 
+                         choices = levels(md.geocoded$PlantationSize),
+                                          selected = levels(md.geocoded$PlantationSize)),
       selectInput("toDisplay","Display",c("Slave Owner","LocationAccuracy"), selected = "Slave Owner"),
       menuItem("Network", tabName = "network", icon = icon("th")),
       menuItem("Raw Data", tabName = "rawdata",icon = icon("file")),
@@ -115,7 +118,6 @@ ui <- dashboardPage(
 server <- function(input, output) {
   
   addLegendCustom <- function(second, map,colors, labels, sizes, opacity = 0.5){
-    print(second)
     if (second){
       colorAdditions <- paste0(colors, "; width:", sizes, "px; height:", sizes, "px")
       labelAdditions <- paste0("<div style='display: inline-block;height: ", sizes, "px;margin-top: 4px;line-height: ", sizes, "px;'>", labels, "</div>")
@@ -128,15 +130,14 @@ server <- function(input, output) {
 
   }
   
-  points <- eventReactive(c(input$slaves, input$priests), {
-    working.spdf <- md.spdf
+  points <- eventReactive(c(input$slaves, input$priests, input$planSize), {
+    working.spdf <- md.spdf[md.spdf$PlantationSize %in% input$planSize,]
     if (input$slaves){
       working.spdf <- working.spdf[which(!is.na(working.spdf$SlaveOwner)),]
     }
-    else
-      if (input$priests){
+    if (input$priests){
         working.spdf <- working.spdf[which(!is.na(working.spdf$Priest)),]
-      }
+    }
     return(working.spdf)
   }, ignoreNULL = FALSE)
   
