@@ -1,0 +1,12 @@
+name: BadinApp
+title: BadinApp
+username:
+account: msisk1
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 469148
+bundleId: 1604951
+url: https://msisk1.shinyapps.io/BadinApp/
+when: 1537899581.16525
+asMultiple: FALSE
+asStatic: FALSE

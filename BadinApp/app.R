@@ -101,7 +101,7 @@ ui <- dashboardPage(
                     title = "Subscribers in Rural Maryland",
                     leafletOutput("mymap", height = 500)),
                 box(width = 3, status = "primary", solidHeader = TRUE, collapsible = TRUE,
-                    title = "Household Size Example", 
+                    title = "Output Example", 
                     plotOutput("chartTest", height = 200)),
                 box(width = 3, status = "primary", solidHeader = TRUE, collapsible = TRUE,
                     title = "Another Output Example", 
@@ -149,7 +149,7 @@ server <- function(input, output) {
       addProviderTiles(providers$Stamen.TonerLite,
                        options = providerTileOptions(noWrap = TRUE), group = "Modern") %>%
       addLayersControl(
-        baseGroups = c("Topographic","Modern"),
+        baseGroups = c("Modern", "Topographic"),
         options = layersControlOptions(collapsed = TRUE)
       )
       
@@ -185,7 +185,8 @@ server <- function(input, output) {
   
   #define server logic required to draw a histogram
   output$chartTest<-renderPlot(
-    hist(points()@data$CensusNumberOfHouseholdMembers)
+    # hist(points()@data$CensusNumberOfHouseholdMembers)
+    NULL
   )
   
   #visNetwork output
