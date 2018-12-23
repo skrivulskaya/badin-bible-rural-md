@@ -14,6 +14,11 @@ library(rsconnect)
 library(shinydashboard)
 library(visNetwork)
 library(dplyr)
+library(DT)
+library(crosstalk)
+library(datasets)
+library(shinydashboard)
+library(shinyWidgets)
 
 #load data files
 md.geocoded <- read.csv("rural_md_geocoded.csv")
@@ -29,6 +34,11 @@ clergy.net$popupw <- paste(sep = "", "<b>",clergy.net$ShinyName,"</b><br/>",
                            "Notes: ",ifelse(is.na(clergy.net$NetworkNote),"N/A",clergy.net$NetworkNote),"<br/>"
 ) #end html popup
 
+#RAW DATA SECTION
+#build the raw data table
+raw.data.tab <- read.csv("raw_data_tab.csv",stringsAsFactors = F)
+rdt <- raw.data.tab %>%
+  tibble::rownames_to_column()
 
 #MAPPING SECTION
 # library(dplyr)
@@ -103,7 +113,10 @@ ui <- dashboardPage(
       tabItem("network",
               fluidRow(visNetworkOutput("network", height = 600)
               )),
-      tabItem("rawdata")
+      tabItem("rawdata",fluidRow(
+        wellPanel(DT::dataTableOutput("x1"),
+                  fluidRow(p(class = 'text-center'))))
+              )
     )
   ))
 
@@ -214,6 +227,26 @@ server <- function(input, output) {
       # define shapes and colors for the lay subscribers
       visGroups(groupname = "Lay", shape = "box")
   })
+  
+  #output raw data table
+  d <- SharedData$new(rdt, ~rowname)
+  
+  #highlight selected rows in the table
+  output$x1 <- DT::renderDataTable(
+    {rdt2 <- rdt[d$selection(),]
+    dt <- DT::datatable(rdt, rownames = FALSE, 
+                        options = list(
+                          columnDefs = list(list(visible=FALSE,targets=c(0))),
+                          pageLength = 20, 
+                          lengthMenu = c (20, 50, 100, 102)))
+    if (NROW(rdt2) == 0) {
+      dt
+    } else {
+      DT::formatStyle(dt, "Rowname", target = "row",
+                      color = DT::styleEqual(rdt2$rowname, rep("white", length(rdt2$rowname))),
+                      backgroundColor = DT::styleEqual(rdt2$rowname, rep("black", length(rdt2$rowname))))  
+    }
+    })
 }
 
 #run the application 
