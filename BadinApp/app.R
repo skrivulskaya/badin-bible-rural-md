@@ -48,7 +48,7 @@ md.geocoded$lat_edit <-ifelse((md.geocoded$Freq > 1),  md.geocoded$lat - (runif(
 md.geocoded$lon_edit <-ifelse((md.geocoded$Freq > 1), md.geocoded$lon - (runif(nrow(md.geocoded))-.5)/40,md.geocoded$lon)
 md.geocoded$latlong<- NULL
 md.geocoded$SlavOwnerText <- "Unknown"
-md.geocoded[!is.na(md.geocoded$SlaveOwner),]$SlavOwnerText <- "Confirmed"
+md.geocoded[!is.na(md.geocoded$SlaveOwner),]$SlavOwnerText <- "Confirmed Slave Owners"
 
 #map and color legend
 md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon_edit","lat_edit")], data = md.geocoded,
@@ -63,8 +63,7 @@ md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
                         "Years: ", ifelse(is.na(md.spdf$ShinyDates), "Unknown", md.spdf$ShinyDates),"<br/>",
                         "Total Household Size: ",ifelse(is.na(md.spdf$CensusNumberOfHouseholdMembers),"Unknown",md.spdf$CensusNumberOfHouseholdMembers), "<br/>",
                         "Enslaved People: ",ifelse(is.na(md.spdf$NumberSlaves),"Unknown",md.spdf$NumberSlaves), "<br/>",
-                        "Location: ",md.spdf$PlottedLocation, "<br/>", 
-                        "Notes: ",ifelse(is.na(md.spdf$ShinyNote),"N/A",md.spdf$ShinyNote),"<br/>"
+                        "Location: ",md.spdf$PlottedLocation
 ) #end html popup
 
 #SHINY SECTION
@@ -97,15 +96,9 @@ ui <- dashboardPage(
     tabItems(
       tabItem("map",
               fluidRow(
-                box(width = 9, status = "primary", solidHeader = TRUE,
+                box(width = 12, status = "primary", solidHeader = TRUE,
                     title = "Subscribers in Rural Maryland",
-                    leafletOutput("mymap", height = 500)),
-                box(width = 3, status = "primary", solidHeader = TRUE, collapsible = TRUE,
-                    title = "Output Example", 
-                    plotOutput("chartTest", height = 200)),
-                box(width = 3, status = "primary", solidHeader = TRUE, collapsible = TRUE,
-                    title = "Another Output Example", 
-                    plotOutput("anotherOutput", height = 200))
+                    leafletOutput("mymap", height = 500))
               )),
       tabItem("network",
               fluidRow(visNetworkOutput("network", height = 600)
@@ -178,7 +171,7 @@ server <- function(input, output) {
     clearMarkers() %>%
     addCircleMarkers(data = points(),color = colorData, popup = ~popupw, radius = size) %>%
     addLegend("bottomleft",pal = pal.name,values=points()[[texty]], opacity = 1)%>%
-    addLegendCustom(second = second.legend, colors = pal.slaves("Confirmed"), labels = c("Few", "", "Many"), sizes = c(5, 10, 20))%>%
+    addLegendCustom(second = second.legend, colors = pal.slaves("Confirmed Slave Owners"), labels = c("Few", "", "Many"), sizes = c(5, 10, 20))%>%
     fitBounds(~min(lon), ~min(lat), ~max(lon), ~max(lat))
   
   })#End observe
