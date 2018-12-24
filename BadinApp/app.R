@@ -22,7 +22,7 @@ library(shinyWidgets)
 
 #load data files
 md.geocoded <- read.csv("rural_md_geocoded.csv")
-md.slave.data <- read.csv("enslaved_people_list.csv", stringsAsFactors = F)
+md.slave.data <- read.csv("enslaved_people_list_minus_carroll.csv", stringsAsFactors = F)
 clergy.net <- read.csv("priest_network.csv", header = T, as.is = T)
 
 #CLERGY NETWORK SECTION
@@ -35,9 +35,14 @@ clergy.net$popupw <- paste(sep = "", "<b>",clergy.net$ShinyName,"</b><br/>",
 ) #end html popup
 
 #RAW DATA SECTION
-#build the raw data table
+#build the raw data tables
+  #subscriber table
 raw.data.tab <- read.csv("raw_data_tab.csv",stringsAsFactors = F)
 rdt <- raw.data.tab %>%
+  tibble::rownames_to_column()
+
+  #enslaved table
+edt <- md.slave.data %>%
   tibble::rownames_to_column()
 
 #MAPPING SECTION
@@ -91,7 +96,8 @@ ui <- dashboardPage(
                                           selected = levels(md.geocoded$PlantationSize)),
       selectInput("toDisplay","Display",c("Slave Owner","LocationAccuracy"), selected = "Slave Owner"),
       menuItem("Network", tabName = "network", icon = icon("th")),
-      menuItem("Raw Data", tabName = "rawdata",icon = icon("file")),
+      menuItem("Subscriber Data", tabName = "rawdata",icon = icon("file")),
+      menuItem("Enslaved Data", tabName = "enslaveddata",icon = icon("file")),
       menuItem("About", tabName = "about", icon = icon("info"))
     )),
   dashboardBody(
@@ -116,7 +122,11 @@ ui <- dashboardPage(
       tabItem("rawdata",fluidRow(
         wellPanel(DT::dataTableOutput("x1"),
                   fluidRow(p(class = 'text-center'))))
-              )
+              ),
+      tabItem("enslaveddata",fluidRow(
+        wellPanel(DT::dataTableOutput("x2"),
+                  fluidRow(p(class = 'text-center'))))
+      )
     )
   ))
 
@@ -228,7 +238,7 @@ server <- function(input, output) {
       visGroups(groupname = "Lay", shape = "box")
   })
   
-  #output raw data table
+  #output raw subscriber data table
   d <- SharedData$new(rdt, ~rowname)
   
   #highlight selected rows in the table
@@ -245,6 +255,26 @@ server <- function(input, output) {
       DT::formatStyle(dt, "Rowname", target = "row",
                       color = DT::styleEqual(rdt2$rowname, rep("white", length(rdt2$rowname))),
                       backgroundColor = DT::styleEqual(rdt2$rowname, rep("black", length(rdt2$rowname))))  
+    }
+    })
+  
+  #output raw esnslaved data table
+  e <- SharedData$new(edt, ~rowname)
+  
+  #highlight selected rows in the table
+  output$x2 <- DT::renderDataTable(
+    {edt2 <- edt[d$selection(),]
+    dt <- DT::datatable(edt, rownames = FALSE, 
+                        options = list(
+                          columnDefs = list(list(visible=FALSE,targets=c(0))),
+                          pageLength = 20, 
+                          lengthMenu = c (20, 50, 100, 302)))
+    if (NROW(edt2) == 0) {
+      dt
+    } else {
+      DT::formatStyle(dt, "Rowname", target = "row",
+                      color = DT::styleEqual(edt2$rowname, rep("white", length(edt2$rowname))),
+                      backgroundColor = DT::styleEqual(edt2$rowname, rep("black", length(edt2$rowname))))  
     }
     })
 }
