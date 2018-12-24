@@ -22,7 +22,7 @@ library(shinyWidgets)
 
 #load data files
 md.geocoded <- read.csv("rural_md_geocoded.csv")
-md.slave.data <- read.csv("enslaved_people_list_minus_carroll.csv", stringsAsFactors = F)
+md.slave.data <- read.csv("enslaved_people_list.csv", stringsAsFactors = F)
 clergy.net <- read.csv("priest_network.csv", header = T, as.is = T)
 
 #CLERGY NETWORK SECTION
@@ -42,7 +42,8 @@ rdt <- raw.data.tab %>%
   tibble::rownames_to_column()
 
   #enslaved table
-edt <- md.slave.data %>%
+enslaved.data.tab <- read.csv("enslaved_people_tab.csv",stringsAsFactors = F)
+edt <- enslaved.data.tab %>%
   tibble::rownames_to_column()
 
 #MAPPING SECTION
