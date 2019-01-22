@@ -25,6 +25,10 @@ md.geocoded <- read.csv("rural_md_geocoded.csv")
 md.slave.data <- read.csv("enslaved_people_list.csv", stringsAsFactors = F)
 clergy.net <- read.csv("priest_network.csv", header = T, as.is = T)
 
+
+
+levels(md.geocoded$PlantationSize)[levels(md.geocoded$PlantationSize)==""] <- "Unknown"
+
 #CLERGY NETWORK SECTION
 #generate html popup to use as node label for network visualization
 clergy.net$popupw <- paste(sep = "", "<b>",clergy.net$ShinyName,"</b><br/>",
@@ -52,7 +56,7 @@ md.geocoded$LocationConfidenceLevel<- factor(md.geocoded$LocationConfidenceLevel
 # print(levels(md.geocoded$LocationConfidenceLevel))
 md.geocoded$latlong <- paste(md.geocoded$lat,md.geocoded$lon,sep="-")
 
-md.geocoded$numSlaves <- as.integer(md.geocoded$NumberSlaves)
+md.geocoded$numSlaves <- as.integer(as.character(md.geocoded$NumberSlaves))
 
 #randomize points on the map
 a<- data.frame(table(md.geocoded$latlong))
@@ -74,12 +78,14 @@ md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon_edit","lat_edit"
 pal <- colorFactor(palette = c("green", "blue"), domain =md.geocoded$LocationConfidenceLevel)
 pal.slaves <- colorFactor(palette = c("green", "blue"), domain =md.geocoded$SlavOwnerText)
 
-#generate html popup
+#generate html popup #
+###WRAP FACTORS IN as.Character() to fix the problems
 md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
-                        "Years: ", ifelse(is.na(md.spdf$ShinyDates), "Unknown", md.spdf$ShinyDates),"<br/>",
-                        "Total Household Size: ",ifelse(is.na(md.spdf$CensusNumberOfHouseholdMembers),"Unknown",md.spdf$CensusNumberOfHouseholdMembers), "<br/>",
+                        "Years: ", ifelse(is.na(md.spdf@data$ShinyDates), "Unknown", as.character(md.spdf@data$ShinyDates)),"<br/>",
+                        "Total Household Size: ",ifelse(is.na(md.spdf$CensusNumberOfHouseholdMembers),"Unknown",as.character(md.spdf$CensusNumberOfHouseholdMembers)), "<br/>",
                         "Enslaved People: ",md.spdf$NumberSlaves, "<br/>",
-                        "Location: ",md.spdf$PlottedLocation
+                        "Location: ",md.spdf$PlottedLocation, "<br />"
+                        # "Notes: ", md.spdf$Notes
 ) #end html popup
 
 #SHINY SECTION
@@ -92,7 +98,7 @@ ui <- dashboardPage(
       menuItem("Map", tabName = "map",icon = icon("map-marker"), selected = TRUE, startExpanded = FALSE),
       checkboxInput("slaves", "Confirmed Slave Owners Only", value = FALSE, width = NULL),
       checkboxInput("priests", "Priests Only", value = FALSE, width = NULL),
-      checkboxGroupInput("planSize", label = "Platation Size", 
+      checkboxGroupInput("planSize", label = "Plantation Size", 
                          choices = levels(md.geocoded$PlantationSize),
                                           selected = levels(md.geocoded$PlantationSize)),
       selectInput("toDisplay","Display",c("Slave Owner","LocationAccuracy"), selected = "Slave Owner"),
@@ -161,7 +167,7 @@ server <- function(input, output) {
   #reactive map output    
   output$mymap <- renderLeaflet({
     leaflet() %>%
-      addProviderTiles(providers$Esri.WorldPhysical,
+      addProviderTiles(providers$Stamen.TopOSMRelief,
                        options = providerTileOptions(noWrap = TRUE),"Topographic")%>%
       addProviderTiles(providers$Stamen.TonerLite,
                        options = providerTileOptions(noWrap = TRUE), group = "Modern") %>%
@@ -178,7 +184,7 @@ server <- function(input, output) {
       texty<-"SlavOwnerText"
       colorData <- pal.slaves(points()$SlavOwnerText)
       pal.name <- pal.slaves
-      size <- points()$numSlaves/5
+      size <- as.numeric(points()$numSlaves)/10
       second.legend <- TRUE
       
     }
@@ -257,7 +263,7 @@ server <- function(input, output) {
                       color = DT::styleEqual(rdt2$rowname, rep("white", length(rdt2$rowname))),
                       backgroundColor = DT::styleEqual(rdt2$rowname, rep("black", length(rdt2$rowname))))  
     }
-    })
+    },options = list(scrollX = TRUE))
   
   #output raw esnslaved data table
   e <- SharedData$new(edt, ~rowname)
