@@ -78,7 +78,7 @@ pal.slaves <- colorFactor(palette = c("green", "blue"), domain =md.geocoded$Slav
 md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
                         "Years: ", ifelse(is.na(md.spdf$ShinyDates), "Unknown", md.spdf$ShinyDates),"<br/>",
                         "Total Household Size: ",ifelse(is.na(md.spdf$CensusNumberOfHouseholdMembers),"Unknown",md.spdf$CensusNumberOfHouseholdMembers), "<br/>",
-                        "Enslaved People: ",ifelse(is.na(md.spdf$NumberSlaves),"Unknown",md.spdf$NumberSlaves), "<br/>",
+                        "Enslaved People: ",md.spdf$NumberSlaves, "<br/>",
                         "Location: ",md.spdf$PlottedLocation
 ) #end html popup
 
