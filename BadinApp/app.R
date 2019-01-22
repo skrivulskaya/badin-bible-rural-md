@@ -71,8 +71,8 @@ md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon_edit","lat_edit"
                                    proj4string = CRS("+proj=longlat +datum=WGS84"))
 
 
-pal <- colorFactor(palette = 'Set1', domain =md.geocoded$LocationConfidenceLevel)
-pal.slaves <- colorFactor(palette = 'Set1', domain =md.geocoded$SlavOwnerText)
+pal <- colorFactor(palette = c("green", "blue"), domain =md.geocoded$LocationConfidenceLevel)
+pal.slaves <- colorFactor(palette = c("green", "blue"), domain =md.geocoded$SlavOwnerText)
 
 #generate html popup
 md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
@@ -195,7 +195,7 @@ server <- function(input, output) {
     clearMarkers() %>%
     addCircleMarkers(data = points(),color = colorData, popup = ~popupw, radius = size) %>%
     addLegend("bottomleft",pal = pal.name,values=points()[[texty]], opacity = 1)%>%
-    addLegendCustom(second = second.legend, colors = pal.slaves("Confirmed Slave Owners"), labels = c("Few", "", "Many"), sizes = c(5, 10, 20))%>%
+    addLegendCustom(second = second.legend, colors = pal.slaves("Confirmed Slave Owners"), labels = c("Few Slaves", "", "Many Slaves"), sizes = c(5, 10, 20))%>%
     fitBounds(~min(lon), ~min(lat), ~max(lon), ~max(lat))
   
   })#End observe
