@@ -127,7 +127,7 @@ ui <- dashboardPage(
               fluidRow(visNetworkOutput("network", height = 600)
               )),
       tabItem("rawdata",fluidRow(
-        wellPanel(DT::dataTableOutput("x1"),
+        wellPanel(DT::dataTableOutput("rawoutput"),
                   fluidRow(p(class = 'text-center'))))
               ),
       tabItem("enslaveddata",fluidRow(
@@ -184,7 +184,7 @@ server <- function(input, output) {
       texty<-"SlavOwnerText"
       colorData <- pal.slaves(points()$SlavOwnerText)
       pal.name <- pal.slaves
-      size <- as.numeric(points()$numSlaves)/10
+      size <- ifelse(is.na(md.spdf$numSlaves),5,as.numeric(md.spdf$numSlaves)/10)
       second.legend <- TRUE
       
     }
@@ -249,41 +249,49 @@ server <- function(input, output) {
   d <- SharedData$new(rdt, ~rowname)
   
   #highlight selected rows in the table
-  output$x1 <- DT::renderDataTable(
-    {rdt2 <- rdt[d$selection(),]
-    dt <- DT::datatable(rdt, rownames = FALSE, 
-                        options = list(
-                          columnDefs = list(list(visible=FALSE,targets=c(0))),
-                          pageLength = 20, 
-                          lengthMenu = c (20, 50, 100, 102)))
-    if (NROW(rdt2) == 0) {
-      dt
-    } else {
-      DT::formatStyle(dt, "Rowname", target = "row",
-                      color = DT::styleEqual(rdt2$rowname, rep("white", length(rdt2$rowname))),
-                      backgroundColor = DT::styleEqual(rdt2$rowname, rep("black", length(rdt2$rowname))))  
-    }
-    },options = list(scrollX = TRUE))
+  output$rawoutput <- DT::renderDataTable(
+    # {rdt2 <- rdt[d$selection(),]
+    # dt <- DT::datatable(rdt, rownames = FALSE, 
+    #                     options = list(
+    #                       columnDefs = list(list(visible=FALSE,targets=c(0))),
+    #                       pageLength = 20, 
+    #                       lengthMenu = c (20, 50, 100, 102)))
+    # if (NROW(rdt2) == 0) {
+    #   dt
+    # } else {
+    #   DT::formatStyle(dt, "Rowname", target = "row",
+    #                   color = DT::styleEqual(rdt2$rowname, rep("white", length(rdt2$rowname))),
+    #                   backgroundColor = DT::styleEqual(rdt2$rowname, rep("black", length(rdt2$rowname))))  
+    # }
+    # },options = list(scrollX = TRUE)
+    
+    # rdt[,2:8],
+    points()@data[,c("SubscriberLastName","SubscriberFirstName","SubscriberTitle","SubscriberLocation","PlottedLocation","NumberSlaves","ShinyNote")],
+    options = list(scrollX = T)
+    )#end renderDataTable
   
   #output raw esnslaved data table
   e <- SharedData$new(edt, ~rowname)
   
   #highlight selected rows in the table
   output$x2 <- DT::renderDataTable(
-    {edt2 <- edt[d$selection(),]
-    dt <- DT::datatable(edt, rownames = FALSE, 
-                        options = list(
-                          columnDefs = list(list(visible=FALSE,targets=c(0))),
-                          pageLength = 20, 
-                          lengthMenu = c (20, 50, 100, 302)))
-    if (NROW(edt2) == 0) {
-      dt
-    } else {
-      DT::formatStyle(dt, "Rowname", target = "row",
-                      color = DT::styleEqual(edt2$rowname, rep("white", length(edt2$rowname))),
-                      backgroundColor = DT::styleEqual(edt2$rowname, rep("black", length(edt2$rowname))))  
-    }
-    })
+    # {edt2 <- edt[d$selection(),]
+    # dt <- DT::datatable(edt, rownames = FALSE, 
+    #                     options = list(
+    #                       columnDefs = list(list(visible=FALSE,targets=c(0))),
+    #                       pageLength = 20, 
+    #                       lengthMenu = c (20, 50, 100, 302)))
+    # if (NROW(edt2) == 0) {
+    #   dt
+    # } else {
+    #   DT::formatStyle(dt, "Rowname", target = "row",
+    #                   color = DT::styleEqual(edt2$rowname, rep("white", length(edt2$rowname))),
+    #                   backgroundColor = DT::styleEqual(edt2$rowname, rep("black", length(edt2$rowname))))  
+    # }
+    # }
+    edt[,2:17],
+    options = list(scrollX = T)
+    )# end renderDataTable
 }
 
 #run the application 
