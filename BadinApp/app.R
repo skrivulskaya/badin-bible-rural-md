@@ -75,8 +75,8 @@ md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon_edit","lat_edit"
                                    proj4string = CRS("+proj=longlat +datum=WGS84"))
 
 
-pal <- colorFactor(palette = c("green", "blue"), domain =md.geocoded$LocationConfidenceLevel)
-pal.slaves <- colorFactor(palette = c("green", "blue"), domain =md.geocoded$SlavOwnerText)
+pal <- colorFactor(palette = c("dark red", "dark blue"), domain =md.geocoded$LocationConfidenceLevel)
+pal.slaves <- colorFactor(palette = c("dark red", "dark blue"), domain =md.geocoded$SlavOwnerText)
 
 #generate html popup #
 ###WRAP FACTORS IN as.Character() to fix the problems
