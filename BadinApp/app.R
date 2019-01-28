@@ -5,6 +5,7 @@
 
 #clear memory
 rm(list=ls(all=TRUE))
+# setwd("/Users/suzannakrivulskaya/Box Sync/Research Assistant Work/Catholic Bibles Project 2018/badin-bible-rural-md-master/BadinApp")
 #setwd("E:\\GIT_Checkouts\\R_Scripts\\badin-bible-rural-md\\BadinApp")
 #load required packages
 library(shiny)
