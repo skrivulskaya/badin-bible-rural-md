@@ -7,6 +7,7 @@
 rm(list=ls(all=TRUE))
 # setwd("/Users/suzannakrivulskaya/Box Sync/Research Assistant Work/Catholic Bibles Project 2018/badin-bible-rural-md-master/BadinApp")
 #setwd("E:\\GIT_Checkouts\\R_Scripts\\badin-bible-rural-md\\BadinApp")
+
 #load required packages
 library(shiny)
 library(rgdal)
@@ -124,6 +125,12 @@ ui <- dashboardPage(
                     title = "Subscribers in Rural Maryland",
                     leafletOutput("mymap", height = 500))
               )),
+      tabItem("about",
+              fluidRow(
+                wellPanel(htmlOutput("about"))
+              )
+        
+               ),
       tabItem("network",
               fluidRow(visNetworkOutput("network", height = 600)
               )),
@@ -212,6 +219,13 @@ server <- function(input, output) {
     # hist(points()@data$CensusNumberOfHouseholdMembers)
     NULL
   )
+  
+  #about section
+  output$about <- renderText ("This project was developed based on a gallery and online exhibition, <a href=https://collections.library.nd.edu/04f477d5b4/preserving-the-steadfastness-of-your-faith>“Preserving the Steadfastness of Your Faith’: Catholics in the Early American Republic,” </a> at Hesburgh Libraries, the University of Notre Dame. The site is supported in part by a Hesburgh Library Research Grant.<p></p> 
+                             Rachel Bohlmann, PhD, American History Librarian at Hesburgh Libraries, started the project, and researched and interpreted the data.<p></p>
+                             Suzanna Krivulskaya, PhD candidate in History at Notre Dame, contributed to research, data analysis, and coding for the app.<p></p>
+                             Matthew Sisk, PhD, Geographic Information Systems Librarian in the Narvari Family Center for Digital Scholarship at Hesburgh Libraries, created the project's original exhibition maps and geocoding, and is the project's GIS expert.
+                             ")
   
   #visNetwork output
   output$network <- renderVisNetwork({
