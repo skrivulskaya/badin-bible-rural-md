@@ -70,7 +70,7 @@ md.geocoded$lat_edit <-ifelse((md.geocoded$Freq > 1),  md.geocoded$lat - (runif(
 md.geocoded$lon_edit <-ifelse((md.geocoded$Freq > 1), md.geocoded$lon - (runif(nrow(md.geocoded))-.5)/40,md.geocoded$lon)
 md.geocoded$latlong<- NULL
 md.geocoded$SlavOwnerText <- "Unknown"
-md.geocoded[!is.na(md.geocoded$SlaveOwner),]$SlavOwnerText <- "Confirmed Slave Owners"
+md.geocoded[!is.na(md.geocoded$SlaveOwner),]$SlavOwnerText <- "Confirmed Enslavers"
 
 #map and color legend
 md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon_edit","lat_edit")], data = md.geocoded,
@@ -98,12 +98,12 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("Map", tabName = "map",icon = icon("map-marker"), selected = TRUE, startExpanded = FALSE),
-      checkboxInput("slaves", "Confirmed Slave Owners Only", value = FALSE, width = NULL),
+      checkboxInput("slaves", "Confirmed Enslavers Only", value = FALSE, width = NULL),
       checkboxInput("priests", "Priests Only", value = FALSE, width = NULL),
       checkboxGroupInput("planSize", label = "Plantation Size", 
                          choices = levels(md.geocoded$PlantationSize),
                                           selected = levels(md.geocoded$PlantationSize)),
-      selectInput("toDisplay","Display",c("Slave Owner","LocationAccuracy"), selected = "Slave Owner"),
+      selectInput("toDisplay","Display",c("Enslavers","LocationAccuracy"), selected = "Enslavers"),
       menuItem("Network", tabName = "network", icon = icon("th")),
       menuItem("Subscriber Data", tabName = "rawdata",icon = icon("file")),
       menuItem("Enslaved Data", tabName = "enslaveddata",icon = icon("file")),
@@ -188,7 +188,7 @@ server <- function(input, output) {
       # 
   })
   observe({
-    if(input$toDisplay=="Slave Owner"){
+    if(input$toDisplay=="Enslavers"){
       texty<-"SlavOwnerText"
       colorData <- pal.slaves(points()$SlavOwnerText)
       pal.name <- pal.slaves
@@ -209,7 +209,7 @@ server <- function(input, output) {
     clearMarkers() %>%
     addCircleMarkers(data = points(),color = colorData, popup = ~popupw, radius = size) %>%
     addLegend("bottomleft",pal = pal.name,values=points()[[texty]], opacity = 1)%>%
-    addLegendCustom(second = second.legend, colors = pal.slaves("Confirmed Slave Owners"), labels = c("Few Slaves", "", "Many Slaves"), sizes = c(5, 10, 20))%>%
+    addLegendCustom(second = second.legend, colors = pal.slaves("Confirmed Enslavers"), labels = c("Few People Enslaved", "", "Many People Enslaved"), sizes = c(5, 10, 20))%>%
     fitBounds(~min(lon), ~min(lat), ~max(lon), ~max(lat))
   
   })#End observe
@@ -223,7 +223,7 @@ server <- function(input, output) {
   #about section
   output$about <- renderText ("This project was developed based on a gallery and online exhibition, <a href=https://collections.library.nd.edu/04f477d5b4/preserving-the-steadfastness-of-your-faith>“Preserving the Steadfastness of Your Faith’: Catholics in the Early American Republic,” </a> at Hesburgh Libraries, the University of Notre Dame. The site is supported in part by a Hesburgh Library Research Grant.<p></p> 
                              Rachel Bohlmann, PhD, American History Librarian at Hesburgh Libraries, started the project, and researched and interpreted the data.<p></p>
-                             Suzanna Krivulskaya, PhD candidate in History at Notre Dame, contributed to research, data analysis, and coding for the app.<p></p>
+                             Suzanna Krivulskaya, PhD, Assistant Professor of History at California State University San Marcos, contributed to research, data analysis, and coding for the app.<p></p>
                              Matthew Sisk, PhD, Geographic Information Systems Librarian in the Narvari Family Center for Digital Scholarship at Hesburgh Libraries, created the project's original exhibition maps and geocoding, and is the project's GIS expert.
                              ")
   
