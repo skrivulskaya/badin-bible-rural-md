@@ -146,7 +146,7 @@ ui <- dashboardPage(
   ))
 
 #define server logic
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   addLegendCustom <- function(second, map,colors, labels, sizes, opacity = 0.5){
     if (second){
@@ -211,7 +211,18 @@ server <- function(input, output) {
     addLegend("bottomleft",pal = pal.name,values=points()[[texty]], opacity = 1)%>%
     addLegendCustom(second = second.legend, colors = pal.slaves("Confirmed Enslavers"), labels = c("Few People Enslaved", "", "Many People Enslaved"), sizes = c(5, 10, 20))%>%
     fitBounds(~min(lon), ~min(lat), ~max(lon), ~max(lat))
+  #attempting to make it selectable via url
+  query <- parseQueryString(session$clientData$url_search)
+  if (!is.null(query[['display']])) {
+    # updateSliderInput(session, "bins", value = query[['bins']])
+    #      selectInput("toDisplay","Display",c("Enslavers","LocationAccuracy"), selected = "Enslavers"),
+    if(query$display=="LocationAccuracy"){
+      updateSelectInput(session, inputId = "toDisplay",selected = "LocationAccuracy")
+      
+    }
+  }
   
+  #end selectable via url
   })#End observe
   
   #define server logic required to draw a histogram

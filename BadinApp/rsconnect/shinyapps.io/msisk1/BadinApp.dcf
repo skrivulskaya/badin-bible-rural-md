@@ -5,8 +5,8 @@ account: msisk1
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 469148
-bundleId: 1604951
+bundleId: 2096414
 url: https://msisk1.shinyapps.io/BadinApp/
-when: 1537899581.16525
+when: 1558359826.84147
 asMultiple: FALSE
 asStatic: FALSE
