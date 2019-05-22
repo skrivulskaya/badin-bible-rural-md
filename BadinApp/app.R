@@ -27,8 +27,12 @@ md.geocoded <- read.csv("rural_md_geocoded.csv")
 md.slave.data <- read.csv("enslaved_people_list.csv", stringsAsFactors = F)
 clergy.net <- read.csv("priest_network.csv", header = T, as.is = T)
 
-
-
+#Colors and symbols
+shapes = c(15, 18, 17, 16) # base R plotting symbols (http://www.statmethods.net/advgraphs/parameters.html)
+#square = 15, diamond = 18, triangle = 17, circle = 16
+loc.colors <- c('#666666', '#ffda09', '#ff6000', '#000066')
+ens.colors <- c("#ff6000", "dark blue")
+#processing
 levels(md.geocoded$PlantationSize)[levels(md.geocoded$PlantationSize)==""] <- "Unknown"
 
 #CLERGY NETWORK SECTION
@@ -77,8 +81,35 @@ md.spdf <-  SpatialPointsDataFrame(coords = md.geocoded[,c("lon_edit","lat_edit"
                                    proj4string = CRS("+proj=longlat +datum=WGS84"))
 
 
-pal <- colorFactor(palette = c('red', 'blue', 'orange', 'purple'), domain =md.geocoded$LocationConfidenceLevel)
-pal.slaves <- colorFactor(palette = c("dark red", "dark blue"), domain =md.geocoded$SlavOwnerText)
+pal <- colorFactor(palette =loc.colors, domain =md.geocoded$LocationConfidenceLevel)
+pal.slaves <- colorFactor(palette = ens.colors, domain =md.geocoded$SlavOwnerText)
+
+# shapes building: The legend is a major hack, but it may work
+icon.size <- 30
+pchIcons = function(pch = 1, names, width = icon.size, height = icon.size, bg = "transparent", col = "black", ...) {
+  n = length(pch)
+  files = character(n)
+  # create a sequence of png images
+  for (i in seq_len(n)) {
+    f = paste("icons/",names[i], ".png", sep = "")
+    png(f, width = width, height = height, bg = bg)
+    par(mar = c(0, 0, 0, 0))
+    plot.new()
+    points(.5, .5, pch = pch[i], col = col[i], cex = min(width, height) / 8, ...)
+    dev.off()
+    files[i] = f
+  }
+  files
+}
+iconFiles = pchIcons(shapes, col = loc.colors, lwd = 4, names = levels(md.geocoded$LocationConfidenceLevel))
+# html_legend <- paste("<img src='/",iconFiles[1],"'>",levels(md.geocoded$LocationConfidenceLevel)[1],"<br/>",
+                     # "<img src='/",iconFiles[1],"'>",levels(md.geocoded$LocationConfidenceLevel)[2],"<br/>",
+                     # "<img src='/",iconFiles[3],"'>",levels(md.geocoded$LocationConfidenceLevel)[3],"<br/>",
+                     # "<img src='/",iconFiles[4],"'>",levels(md.geocoded$LocationConfidenceLevel)[4],"<br/>",sep="")
+html_legend <- paste("<img src='https://documents.library.nd.edu/documents/arch-lib/HUE-ND/Sisk_Sandbox/icons/State.png'>",levels(md.geocoded$LocationConfidenceLevel)[1],"<br/>",
+                     "<img src='https://documents.library.nd.edu/documents/arch-lib/HUE-ND/Sisk_Sandbox/icons/County.png'>",levels(md.geocoded$LocationConfidenceLevel)[2],"<br/>",
+                     "<img src='https://documents.library.nd.edu/documents/arch-lib/HUE-ND/Sisk_Sandbox/icons/City.png'>",levels(md.geocoded$LocationConfidenceLevel)[3],"<br/>",
+                     "<img src='https://documents.library.nd.edu/documents/arch-lib/HUE-ND/Sisk_Sandbox/icons/Point.png'>",levels(md.geocoded$LocationConfidenceLevel)[4],"<br/>",sep="")
 
 #generate html popup #
 ###WRAP FACTORS IN as.Character() to fix the problems
@@ -89,6 +120,10 @@ md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
                         "Location: ",md.spdf$PlottedLocation, "<br />"
                         # "Notes: ", md.spdf$Notes
 ) #end html popup
+
+
+
+
 
 #SHINY SECTION
 #build Shiny interface
@@ -158,7 +193,24 @@ server <- function(input, output, session) {
     }else{
       return(clearTopoJSON(map))
     }
-
+  }
+  addLegendWithHTML <- function(locationAcc, map, paly = NA, valy = NA){
+    if (locationAcc){
+      return(addControl(map,html = html_legend, position = "bottomleft"))
+    }else{
+      return(addLegend(map,"bottomleft",pal = paly, values = valy, opacity = 1))
+        
+    }
+  }
+  addMarkersCustom <- function(locationAcc, map, colors = colorData, data, sizey = size){
+    if (locationAcc){
+      return(addMarkers(map,data = data, icon = icons(
+        iconUrl = iconFiles[points()$LocationConfidenceLevel],
+        popupAnchorX = 20, popupAnchorY = 0,iconAnchorX = icon.size/2, iconAnchorY= icon.size/2
+      ), popup = ~popupw, options = markerOptions(opacity = .5)))
+    }else{
+      return(addCircleMarkers(map, data = data,color = colors,popup = ~popupw, radius = sizey))
+    }
   }
   
   points <- eventReactive(c(input$slaves, input$priests, input$planSize), {
@@ -193,8 +245,10 @@ server <- function(input, output, session) {
       colorData <- pal.slaves(points()$SlavOwnerText)
       pal.name <- pal.slaves
       size <- ifelse(is.na(md.spdf$numSlaves),5,as.numeric(md.spdf$numSlaves)/10)
+      icons = FALSE
       second.legend <- TRUE
-      
+      locationAcc <- FALSE
+
     }
     if (input$toDisplay=="LocationAccuracy"){
       texty<-"LocationConfidenceLevel"
@@ -202,15 +256,23 @@ server <- function(input, output, session) {
       pal.name <- pal
       size <-10
       second.legend <- FALSE
+      locationAcc <- TRUE
     }
   
   leafletProxy("mymap",data=points())%>%
     clearControls()%>%
     clearMarkers() %>%
-    addCircleMarkers(data = points(),color = colorData, popup = ~popupw, radius = size) %>%
-    addLegend("bottomleft",pal = pal.name,values=points()[[texty]], opacity = 1)%>%
+    addMarkersCustom(data = points(), locationAcc = locationAcc, colors = colorData, sizey = size)%>%
+    # addLegend("bottomleft",pal = pal.name,values=points()[[texty]], opacity = 1)%>%
+    addLegendWithHTML(locationAcc = locationAcc, paly = pal.name, valy=points()[[texty]]) %>%
     addLegendCustom(second = second.legend, colors = pal.slaves("Confirmed Enslavers"), labels = c("Few People Enslaved", "", "Many People Enslaved"), sizes = c(5, 10, 20))%>%
+    
     fitBounds(~min(lon), ~min(lat), ~max(lon), ~max(lat))
+  
+  
+  
+  
+  
   #attempting to make it selectable via url
   query <- parseQueryString(session$clientData$url_search)
   if (!is.null(query[['display']])) {
