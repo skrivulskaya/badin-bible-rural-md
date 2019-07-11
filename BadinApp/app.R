@@ -3,10 +3,9 @@
 # Find out more about building applications with Shiny here:
 #    http://shiny.rstudio.com/
 
-#clear memory
+
 rm(list=ls(all=TRUE))
-# setwd("/Users/suzannakrivulskaya/Box Sync/Research Assistant Work/Catholic Bibles Project 2018/badin-bible-rural-md-master/BadinApp")
-#setwd("E:\\GIT_Checkouts\\R_Scripts\\badin-bible-rural-md\\BadinApp")
+
 
 #load required packages
 library(shiny)
@@ -57,11 +56,8 @@ edt <- enslaved.data.tab %>%
   tibble::rownames_to_column()
 
 #MAPPING SECTION
-# library(dplyr)
 md.geocoded$LocationConfidenceLevel<- factor(md.geocoded$LocationConfidenceLevel, levels=c("State","County","City","Point"))
-# print(levels(md.geocoded$LocationConfidenceLevel))
 md.geocoded$latlong <- paste(md.geocoded$lat,md.geocoded$lon,sep="-")
-
 md.geocoded$numSlaves <- as.integer(as.character(md.geocoded$NumberSlaves))
 
 #randomize points on the map
@@ -102,17 +98,13 @@ pchIcons = function(pch = 1, names, width = icon.size, height = icon.size, bg = 
   files
 }
 iconFiles = pchIcons(shapes, col = loc.colors, lwd = 4, names = levels(md.geocoded$LocationConfidenceLevel))
-# html_legend <- paste("<img src='/",iconFiles[1],"'>",levels(md.geocoded$LocationConfidenceLevel)[1],"<br/>",
-                     # "<img src='/",iconFiles[1],"'>",levels(md.geocoded$LocationConfidenceLevel)[2],"<br/>",
-                     # "<img src='/",iconFiles[3],"'>",levels(md.geocoded$LocationConfidenceLevel)[3],"<br/>",
-                     # "<img src='/",iconFiles[4],"'>",levels(md.geocoded$LocationConfidenceLevel)[4],"<br/>",sep="")
+
 html_legend <- paste("<img src='https://documents.library.nd.edu/documents/arch-lib/HUE-ND/Sisk_Sandbox/icons/State.png'>",levels(md.geocoded$LocationConfidenceLevel)[1],"<br/>",
                      "<img src='https://documents.library.nd.edu/documents/arch-lib/HUE-ND/Sisk_Sandbox/icons/County.png'>",levels(md.geocoded$LocationConfidenceLevel)[2],"<br/>",
                      "<img src='https://documents.library.nd.edu/documents/arch-lib/HUE-ND/Sisk_Sandbox/icons/City.png'>",levels(md.geocoded$LocationConfidenceLevel)[3],"<br/>",
                      "<img src='https://documents.library.nd.edu/documents/arch-lib/HUE-ND/Sisk_Sandbox/icons/Point.png'>",levels(md.geocoded$LocationConfidenceLevel)[4],"<br/>",sep="")
 
 #generate html popup #
-###WRAP FACTORS IN as.Character() to fix the problems
 md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
                         "Years: ", ifelse(is.na(md.spdf@data$ShinyDates), "Unknown", as.character(md.spdf@data$ShinyDates)),"<br/>",
                         "Total Household Size: ",ifelse(is.na(md.spdf$CensusNumberOfHouseholdMembers),"Unknown",as.character(md.spdf$CensusNumberOfHouseholdMembers)), "<br/>",
@@ -120,9 +112,6 @@ md.spdf$popupw <- paste(sep = "",  "<b>", md.spdf$ShinyName,"</b><br/>",
                         "Location: ",md.spdf$PlottedLocation, "<br />"
                         # "Notes: ", md.spdf$Notes
 ) #end html popup
-
-
-
 
 
 #SHINY SECTION
@@ -289,7 +278,6 @@ server <- function(input, output, session) {
   
   #define server logic required to draw a histogram
   output$chartTest<-renderPlot(
-    # hist(points()@data$CensusNumberOfHouseholdMembers)
     NULL
   )
   
@@ -338,22 +326,6 @@ server <- function(input, output, session) {
   
   #highlight selected rows in the table
   output$rawoutput <- DT::renderDataTable(
-    # {rdt2 <- rdt[d$selection(),]
-    # dt <- DT::datatable(rdt, rownames = FALSE, 
-    #                     options = list(
-    #                       columnDefs = list(list(visible=FALSE,targets=c(0))),
-    #                       pageLength = 20, 
-    #                       lengthMenu = c (20, 50, 100, 102)))
-    # if (NROW(rdt2) == 0) {
-    #   dt
-    # } else {
-    #   DT::formatStyle(dt, "Rowname", target = "row",
-    #                   color = DT::styleEqual(rdt2$rowname, rep("white", length(rdt2$rowname))),
-    #                   backgroundColor = DT::styleEqual(rdt2$rowname, rep("black", length(rdt2$rowname))))  
-    # }
-    # },options = list(scrollX = TRUE)
-    
-    # rdt[,2:8],
     points()@data[,c("SubscriberLastName","SubscriberFirstName","SubscriberTitle","SubscriberLocation","PlottedLocation","NumberSlaves","ShinyNote")],
     options = list(scrollX = T)
     )#end renderDataTable
@@ -363,20 +335,6 @@ server <- function(input, output, session) {
   
   #highlight selected rows in the table
   output$x2 <- DT::renderDataTable(
-    # {edt2 <- edt[d$selection(),]
-    # dt <- DT::datatable(edt, rownames = FALSE, 
-    #                     options = list(
-    #                       columnDefs = list(list(visible=FALSE,targets=c(0))),
-    #                       pageLength = 20, 
-    #                       lengthMenu = c (20, 50, 100, 302)))
-    # if (NROW(edt2) == 0) {
-    #   dt
-    # } else {
-    #   DT::formatStyle(dt, "Rowname", target = "row",
-    #                   color = DT::styleEqual(edt2$rowname, rep("white", length(edt2$rowname))),
-    #                   backgroundColor = DT::styleEqual(edt2$rowname, rep("black", length(edt2$rowname))))  
-    # }
-    # }
     edt[,2:17],
     options = list(scrollX = T)
     )# end renderDataTable
@@ -384,7 +342,3 @@ server <- function(input, output, session) {
 
 #run the application 
 shinyApp(ui = ui, server = server)
-
-#update the application in Shinyapps.io
-# library(rsconnect)
-# deployApp()
