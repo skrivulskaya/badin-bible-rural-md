@@ -20,11 +20,15 @@ library(crosstalk)
 library(datasets)
 library(shinydashboard)
 library(shinyWidgets)
+library(shinyjs)
+library(V8)
 
 #load data files
 md.geocoded <- read.csv("rural_md_geocoded.csv")
 md.slave.data <- read.csv("enslaved_people_list.csv", stringsAsFactors = F)
 clergy.net <- read.csv("priest_network.csv", header = T, as.is = T)
+
+nosidebar <- FALSE
 
 #Colors and symbols
 shapes = c(15, 18, 17, 16) # base R plotting symbols (http://www.statmethods.net/advgraphs/parameters.html)
@@ -133,7 +137,8 @@ ui <- dashboardPage(
       menuItem("Enslaved Data", tabName = "enslaveddata",icon = icon("file")),
       menuItem("About", tabName = "about", icon = icon("info"))
     )),
-  dashboardBody(
+  dashboardBody(useShinyjs(),
+                extendShinyjs(text = "shinyjs.hidehead = function(parm){$('header').css('display', parm);}"),
     tags$head(tags$style(type = "text/css", "html, body {width:100%;height:100%}",
                          ".leaflet .legend i{
                          border-radius: 50%;
@@ -264,14 +269,22 @@ server <- function(input, output, session) {
   
   #attempting to make it selectable via url
   query <- parseQueryString(session$clientData$url_search)
+  print(query)
   if (!is.null(query[['display']])) {
     # updateSliderInput(session, "bins", value = query[['bins']])
     #      selectInput("toDisplay","Display",c("Enslavers","LocationAccuracy"), selected = "Enslavers"),
     if(query$display=="LocationAccuracy"){
       updateSelectInput(session, inputId = "toDisplay",selected = "LocationAccuracy")
-      
+    }
+   
+  }
+  if(!is.null(query[['side']])){
+    if(query$side == "no"){
+      shinyjs::addClass(selector = "body", class = "sidebar-collapse")
+      js$hidehead('none') 
     }
   }
+  
   
   #end selectable via url
   })#End observe
